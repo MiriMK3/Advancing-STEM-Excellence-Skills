@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ארגז כלים לפיתוח מיומנויות STEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Earth Tones (Background: #FDFBF8, Text: #3D405B, Accent: #81B29A, Secondary Accent: #E07A5F) -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard. A top navigation bar allows users (lecturers) to select one of three core skills. The main content area dynamically updates to display information for the chosen skill. Each skill view includes: 1) A clear definition and its core components. 2) An illustrative, interactive bar chart comparing the effectiveness of different pedagogical methods. 3) An interactive "Toolkit" of cards, where each card details a practical application method. This structure was chosen to transform the static report into a user-driven exploratory tool, enabling lecturers to quickly access and compare practical strategies relevant to their needs, rather than reading a linear document. -->
+    <!-- Visualization & Content Choices: 
+        1. Skill Definitions/Components -> Goal: Inform -> Method: Dynamic HTML text block -> Interaction: Updates on nav-button click -> Justification: Provides clear, foundational context for the selected skill.
+        2. Pedagogical Methods -> Goal: Compare/Illustrate -> Method: Interactive Horizontal Bar Chart (Chart.js/Canvas) -> Interaction: Chart redraws with new data on skill selection; tooltips on hover -> Justification: A visual comparison of methods is more intuitive and engaging than a simple list. It helps lecturers quickly identify promising strategies.
+        3. Implementation Examples -> Goal: Organize/Guide -> Method: Interactive HTML/CSS cards (expand on click) -> Interaction: Clicking a card reveals detailed examples and tips -> Justification: This "progressive disclosure" approach keeps the interface clean and prevents information overload. It allows users to dive deep only into the methods that interest them, making the content highly actionable.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #FDFBF8;
+            color: #3D405B;
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .nav-btn.active {
+            border-bottom-color: #81B29A;
+            color: #81B29A;
+            transform: translateY(-2px);
+        }
+        .toolkit-card {
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .toolkit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .toolkit-card .details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .toolkit-card.open .details {
+            max-height: 500px; 
+            transition: max-height 0.5s ease-in;
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <header class="text-center mb-10 md:mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 text-[#3D405B]">ארגז כלים לפיתוח מיומנויות STEM</h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">מדריך אינטראקטיבי למרצים ומרצות, מבוסס על תובנות דו"ח מוסד שמואל נאמן</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-10 md:mb-12">
+            <div class="flex flex-wrap justify-center space-x-4 sm:space-x-8 rtl:space-x-reverse">
+                <button id="nav-lll" class="nav-btn active text-lg font-semibold py-3 px-2" data-skill="lll">🧠 למידה עצמית</button>
+                <button id="nav-teamwork" class="nav-btn text-lg font-semibold py-3 px-2" data-skill="teamwork">🤝 עבודת צוות</button>
+                <button id="nav-problem-solving" class="nav-btn text-lg font-semibold py-3 px-2" data-skill="problemSolving">💡 פתרון בעיות</button>
+            </div>
+        </nav>
+
+        <main id="content-area">
+        </main>
+
+    </div>
+
+    <script>
+        const appData = {
+            lll: {
+                title: 'למידה עצמית ולמידת חיים (LLL)',
+                description: 'מיומנות זו מתארת את היכולת לרכוש ידע באופן עצמאי, לנהל את תהליך הלמידה האישי, לפתח הרגלי למידה מתמידים, ולהפגין מוטיבציה, חוסן נפשי ויוזמה. מיומנות זו כוללת יכולות כמו איתור מידע, ניהול זמן, התמודדות עם כישלונות ואימוץ אסטרטגיות למידה חדשות.',
+                chartData: {
+                    labels: ['למידה מבוססת פרויקטים', 'כיתה הפוכה', 'הוראה בהנחיה מינימלית', 'הצגת פרזנטציות ופוסטרים'],
+                    values: [90, 75, 70, 60]
+                },
+                toolkit: [
+                    {
+                        title: 'למידה מבוססת פרויקטים/חקירה',
+                        icon: '🔬',
+                        details: '<strong>מה זה?</strong> מתן משימה פתוחה המצריכה מהסטודנטים לחקור נושא עצמאית, לאתר מקורות, לסנתז מידע ולהציג תוצר.<br><strong>דוגמה יישומית:</strong> בקורס מבוא להנדסה, במקום תרגיל על חישוב חוזק חומרים, הציגו אתגר: "תכננו גשר באורך 10 מטרים ממשטחי קרטון ודבק, שיוכל לשאת משקל של 5 קילוגרם. הגישו דו"ח המנתח את הכשלים וההצלחות בתכנון שלכם".'
+                    },
+                    {
+                        title: 'כיתה הפוכה',
+                        icon: '🔄',
+                        details: '<strong>מה זה?</strong> הסטודנטים לומדים את החומר התיאורטי בבית, והזמן בכיתה מוקדש לתרגול יישומי ודיונים בהנחיית המרצה.<br><strong>דוגמה יישומית:</strong> בקורס בביולוגיה, שלחו מראש סרטון קצר המסביר את תהליך המיטוזה. בכיתה, חלקו את הסטודנטים לקבוצות כדי לפתור בעיות הקשורות לטעויות בתהליך שעלולות להוביל למחלות.'
+                    },
+                    {
+                        title: 'הוראה בהנחיה מינימלית',
+                        icon: '🧭',
+                        details: '<strong>מה זה?</strong> הצבת בעיה או שאלה בפני הסטודנטים ומתן אוטונומיה רחבה למצוא את הדרך לפתרון. המרצה משמש כמנחה ויועץ.<br><strong>דוגמה יישומית:</strong> בקורס בתכנות, הציגו API של שירות חיצוני (למשל, שירות מזג אוויר) ובקשו מהסטודנטים לבנות יישום קטן המשתמש בו, מבלי לתת להם מדריך "צעד-אחר-צעד".'
+                    }
+                ]
+            },
+            teamwork: {
+                title: 'עבודת צוות, שיתוף פעולה ותקשורת בין-אישית',
+                description: 'זוהי היכולת לשתף פעולה באופן אפקטיבי כחלק מצוות להשגת מטרות מורכבות. המיומנות מורכבת מיכולות קוגניטיביות (ניהול פרויקטים, מיקוד במשימה) וחברתיות (ניהול קונפליקטים, תקשורת, מתן וקבלת משוב, ואמפתיה).',
+                chartData: {
+                    labels: ['משימות דורשות תלות הדדית', 'למידה מבוססת צוותים', 'הבניה מכוונת של צוותים', 'דיונים קבוצתיים'],
+                    values: [95, 85, 75, 65]
+                },
+                toolkit: [
+                    {
+                        title: 'הבניה מכוונת של צוותים',
+                        icon: '🧩',
+                        details: '<strong>מה זה?</strong> הרכבת צוותים הטרוגניים (כישורים, רקע) כדי להעשיר את נקודות המבט, והגדרת גודל צוות אופטימלי (3-5 חברים).<br><strong>דוגמה יישומית:</strong> בתחילת פרויקט, ערכו סקר קצר בו סטודנטים מדרגים את חוזקותיהם (למשל, "תכנות", "ניתוח נתונים", "כתיבה", "עיצוב מצגות"). השתמשו בתוצאות כדי להרכיב צוותים מאוזנים.'
+                    },
+                    {
+                        title: 'משימות הדורשות תלות הדדית',
+                        icon: '🔗',
+                        details: '<strong>מה זה?</strong> תכנון משימות שלא ניתן להשלימן באמצעות חלוקת עבודה פשוטה, אלא דורשות סיעור מוחות וסינתזה של כל חברי הצוות.<br><strong>דוגמה יישומית:</strong> בקורס בכימיה, במקום לחלק פרקי מעבדה שונים לחברי הצוות, תנו להם משימה משותפת: "זהו חומר לא ידוע על סמך סדרת ניסויים שתתכננו ותבצעו יחד. כל חבר צוות חייב לאשר את שלב התכנון הבא לפני הביצוע".'
+                    },
+                    {
+                        title: 'הגדרת חוזה עבודה וכללים',
+                        icon: '📜',
+                        details: '<strong>מה זה?</strong> הנחיית הצוותים לנסח בתחילת העבודה "חוזה" המגדיר תפקידים, כללי התנהגות, דרכי תקשורת וציפיות הדדיות.<br><strong>דוגמה יישומית:</strong> ספקו תבנית פשוטה ל"חוזה צוות" הכוללת סעיפים כמו: "תדירות מפגשים", "קבלת החלטות (רוב/פה אחד)", "דרך לפתרון קונפליקטים", ו"אחריות אישית של כל חבר צוות".'
+                    }
+                ]
+            },
+            problemSolving: {
+                title: 'פתרון בעיות מורכבות וחשיבה ביקורתית',
+                description: 'היכולת לזהות, לעבד, לנתח ולהעריך מידע וטיעונים באופן לוגי כדי לפתור בעיות שאין להן פתרון מיידי או חד-משמעי. מיומנות זו כוללת הטלת ספק, בחינת הנחות יסוד, זיהוי נקודות מבט מרובות וגיבוש החלטות ופתרונות מנומקים.',
+                chartData: {
+                    labels: ['למידה מבוססת בעיות (PBL)', 'שימוש בסימולציות', 'ניתוח מקרי בוחן', 'הוראה מפורשת'],
+                    values: [95, 88, 80, 70]
+                },
+                toolkit: [
+                    {
+                        title: 'למידה מבוססת בעיות (PBL)',
+                        icon: '❓',
+                        details: '<strong>מה זה?</strong> פתיחת יחידת לימוד עם Ill-structured problem – בעיה אותנטית ומורכבת שאין לה פתרון יחיד, והפיכת תהליך פתרונה למנוע של הלמידה.<br><strong>דוגמה יישומית:</strong> בקורס בפיזיקה, במקום ללמד את חוקי התנועה ואז לתרגל, הציגו סרטון של תאונת דרכים ובקשו מהסטודנטים: "נתחו את הכוחות שפעלו וקבעו מה הייתה המהירות המשוערת של כל רכב לפני ההתנגשות. נמקו את הנחות היסוד שלכם".'
+                    },
+                    {
+                        title: 'שימוש בסימולציות',
+                        icon: '💻',
+                        details: '<strong>מה זה?</strong> הצגת מערכת מורכבת באמצעות סימולציה ממוחשבת, המאפשרת לסטודנטים להתנסות, לבחון השערות ולהבין קשרי סיבה-תוצאה.<br><strong>דוגמה יישומית:</strong> בקורס במדעי המחשב על רשתות, השתמשו בסימולטור רשתות (כמו Cisco Packet Tracer) כדי לאפשר לסטודנטים לתכנן, לבנות ו"לשבור" רשתות וירטואליות כדי להבין את הפרוטוקולים לעומק.'
+                    },
+                    {
+                        title: 'ניתוח מקרי בוחן (Case Studies)',
+                        icon: '📈',
+                        details: '<strong>מה זה?</strong> הצגת מקרי בוחן אמיתיים מהתעשייה או מהמחקר, וניתוחם בכיתה תוך שאילת שאלות ביקורתיות על תהליכי קבלת ההחלטות והתוצאות.<br><strong>דוגמה יישומית:</strong> בקורס על אתיקה בהנדסה, נתחו את מקרה אסון צ\'לנג\'ר. בקשו מהסטודנטים לזהות את הכשלים בתהליך קבלת ההחלטות שהובילו לאסון, ולא רק את הכשל הטכני.'
+                    }
+                ]
+            }
+        };
+
+        let currentSkill = 'lll';
+        let myChart = null;
+
+        function renderContent(skillId) {
+            const skill = appData[skillId];
+            if (!skill) return;
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = ''; 
+
+            const container = document.createElement('div');
+            container.className = 'fade-in';
+            
+            let toolkitHTML = skill.toolkit.map(item => `
+                <div class="toolkit-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 w-full">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="text-3xl mr-4 rtl:ml-4">${item.icon}</div>
+                            <h4 class="text-xl font-bold text-[#3D405B]">${item.title}</h4>
+                        </div>
+                        <div class="details mt-3 pt-3 border-t border-gray-100">
+                            <p class="text-gray-600 leading-relaxed">${item.details}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 md:gap-12">
+                    <div class="lg:col-span-2">
+                        <h2 class="text-3xl font-bold mb-4 text-[#3D405B]">${skill.title}</h2>
+                        <p class="text-lg text-gray-700 leading-relaxed">${skill.description}</p>
+                    </div>
+                    <div class="lg:col-span-3">
+                         <h3 class="text-2xl font-bold text-center mb-4 text-[#3D405B]">מתודולוגיות פיתוח מובילות</h3>
+                         <div class="chart-container relative h-80 md:h-96 w-full max-w-2xl mx-auto bg-white/50 p-4 rounded-lg">
+                            <canvas id="skillChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-16">
+                    <h3 class="text-3xl font-bold text-center mb-8 text-[#3D405B]">ארגז כלים יישומי</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                        ${toolkitHTML}
+                    </div>
+                </div>
+            `;
+            
+            contentArea.appendChild(container);
+            createOrUpdateChart(skill.chartData);
+            setupToolkitListeners();
+        }
+
+        function createOrUpdateChart(chartData) {
+            const ctx = document.getElementById('skillChart').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'רמת אפקטיביות (המחשה)',
+                        data: chartData.values,
+                        backgroundColor: '#81B29A',
+                        borderColor: '#6a947e',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%'
+                                }
+                            }
+                        },
+                        y: {
+                           ticks: {
+                               font: {
+                                   size: 14
+                               }
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#3D405B',
+                            titleFont: { size: 16 },
+                            bodyFont: { size: 14 },
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function setupNavListeners() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    currentSkill = button.dataset.skill;
+                    
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    renderContent(currentSkill);
+                });
+            });
+        }
+        
+        function setupToolkitListeners() {
+            const cards = document.querySelectorAll('.toolkit-card');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('open');
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderContent(currentSkill);
+            setupNavListeners();
+        });
+    </script>
+</body>
+</html>
